@@ -210,7 +210,7 @@ export default function Home() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex-1 px-6 py-3 bg-[#1A1A1A] dark:bg-white text-white dark:text-[#1A1A1A] rounded-xl hover:bg-[#2A2A2A] dark:hover:bg-gray-100 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-all font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex-1 px-6 py-3 bg-[#1A1A1A] dark:bg-white text-white dark:text-[#1A1A1A] rounded-xl hover:bg-[#2A2A2A] dark:hover:bg-gray-100 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-all font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed"
                 >
                   {loading ? "Processing..." : "Generate Tests"}
                 </button>
@@ -218,7 +218,7 @@ export default function Home() {
                 <button
                   onClick={handleAgenticSolve}
                   disabled={isAgenticLoading || !results}
-                  className="flex-1 px-6 py-3 bg-[#1A1A1A] dark:bg-white text-white dark:text-[#1A1A1A] rounded-xl hover:bg-[#2A2A2A] dark:hover:bg-gray-100 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-all font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex-1 px-6 py-3 bg-[#1A1A1A] dark:bg-white text-white dark:text-[#1A1A1A] rounded-xl hover:bg-[#2A2A2A] dark:hover:bg-gray-100 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-all font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed"
                 >
                   {isAgenticLoading ? "Solving..." : "Run Agentic JSONata"}
                 </button>
@@ -430,35 +430,37 @@ export default function Home() {
                                 }`}>
                                   {result.passed ? "✓ Passed" : "✗ Failed"}
                                 </span>
-                                {!result.passed && (
-                                  <button
-                                    onClick={() => {
-                                      const errorKey = `${index}-${resultIndex}`;
-                                      setShowErrorsMap(prev => ({
-                                        ...prev,
-                                        [errorKey]: !prev[errorKey]
-                                      }));
-                                    }}
-                                    className="px-4 py-2 bg-[#F9F7F6] dark:bg-[#3A3A3A] text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-[#4A4A4A] transition-all font-semibold flex items-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                                  >
-                                    {!showErrorsMap[`${index}-${resultIndex}`] ? "Show Errors" : "Hide Errors"}
-                                  </button>
-                                )}
                               </div>
-                              {result.output !== undefined && (
+                              {result.passed ? (
                                 <div className="mt-2">
                                   <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
                                     {JSON.stringify(result.output, null, 2)}
                                   </pre>
                                 </div>
-                              )}
-                              {!result.passed && showErrorsMap[`${index}-${resultIndex}`] && result.error && (
-                                <div className="mt-2 overflow-hidden">
-                                  <pre className="text-sm whitespace-pre-wrap break-words overflow-x-auto text-red-600 dark:text-red-400 font-mono max-w-full">
-                                    {typeof result.error === 'object' 
-                                      ? JSON.stringify(result.error, null, 2)
-                                      : result.error}
-                                  </pre>
+                              ) : (
+                                <div className="mt-2 space-y-2">
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Expected:</span>
+                                    <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
+                                      {JSON.stringify(result.example, null, 2)}
+                                    </pre>
+                                  </div>
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Received:</span>
+                                    <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
+                                      {JSON.stringify(result.output, null, 2)}
+                                    </pre>
+                                  </div>
+                                  {result.error && (
+                                    <div>
+                                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Error:</span>
+                                      <pre className="text-sm whitespace-pre-wrap break-words overflow-x-auto text-red-600 dark:text-red-400 font-mono max-w-full">
+                                        {typeof result.error === 'object' 
+                                          ? JSON.stringify(result.error, null, 2)
+                                          : result.error}
+                                      </pre>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
