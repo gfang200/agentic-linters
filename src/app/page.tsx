@@ -18,7 +18,7 @@ export default function Home() {
  $rubric_criteria := response.context.annotations.endpoint_GoldfishStrategy_2.annotations.rubric_items.response.criterias;
 )`);
   const [output, setOutput] = useState<string>(`[{"criteria":"dfasdfasdfeee","category":"Objective","attributes":{"Category2":"Explicit","Label":"Aesthetics"}},{"criteria":"asdfasfeasfe","category":"Objective","attributes":{"Category2":"Implicit","Label":"Functionality"}}]`);
-  const [description, setDescription] = useState<string>("The final JSONata should return false if all criteria are over 30 characters, and true if any criteria are under 30 characters");
+  const [shouldFireDescription, setShouldFireDescription] = useState<string>("The linter should fire if any criteria are under 30 characters");
   const [results, setResults] = useState<{
     trueExamples: any[];
     falseExamples: any[];
@@ -59,7 +59,7 @@ export default function Home() {
         body: JSON.stringify({
           jsonata,
           output: JSON.parse(output),
-          description,
+          description: `The final JSONata should return true if ${shouldFireDescription}, otherwise it should return false`,
         }),
       });
 
@@ -104,7 +104,7 @@ export default function Home() {
           jsonata,
           trueExamples: results.trueExamples,
           falseExamples: results.falseExamples,
-          description,
+          description: `The final JSONata should return true if ${shouldFireDescription}, otherwise it should return false`,
         }),
         signal: controller.signal,
       });
@@ -196,13 +196,13 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Description of Intended Output</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">The linter should fire if</label>
                 <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  value={shouldFireDescription}
+                  onChange={(e) => setShouldFireDescription(e.target.value)}
                   className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#2A2A2A] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#FF8A3C] focus:border-transparent transition-all outline-none"
-                  rows={4}
-                  placeholder="Describe when the expression should return true or false"
+                  rows={2}
+                  placeholder="Describe when the linter should fire"
                 />
               </div>
 
