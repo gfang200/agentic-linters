@@ -190,6 +190,8 @@ Return a JSON array of the most relevant documentation file names (without .md e
     // Continue with empty documentation if there's an error
   }
 
+  console.log(documentation)
+  
   const prompt = `You are a JSONata expert. Your task is to write a JSONata expression that satisfies this requirement:
 ${description}
 
