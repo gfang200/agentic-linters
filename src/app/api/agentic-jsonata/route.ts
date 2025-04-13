@@ -188,7 +188,7 @@ Return a JSON array of the most relevant documentation file names (without .md e
   const prompt = `You are a JSONata expert. Your task is to write a JSONata expression that satisfies this requirement:
 ${description}
 
-The input will be a JSON object that contains data nested under response.context.annotations.endpoint_GoldfishStrategy_2.annotations.rubric_items.response.criterias
+The input will be a JSON object similar to the provided examples.
 
 Here are some example inputs and their expected outputs:
 
