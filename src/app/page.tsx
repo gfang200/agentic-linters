@@ -185,7 +185,7 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Example Output</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Output of the JSONata Expression</label>
                 <textarea
                   value={output}
                   onChange={(e) => setOutput(e.target.value)}
@@ -388,7 +388,7 @@ export default function Home() {
                         <div className="space-y-4">
                           <div className="p-4 bg-gray-50 dark:bg-gray-900/20 rounded-xl border border-gray-200 dark:border-gray-700">
                             <div className="flex justify-between items-center mb-2">
-                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">JSONata Expression</h4>
+                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Starting JSONata Expression</h4>
                             </div>
                             <pre className="overflow-x-auto p-2 bg-white dark:bg-[#2A2A2A] rounded-lg border border-gray-100 dark:border-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm">
                               {iteration.jsonata.trim()}
