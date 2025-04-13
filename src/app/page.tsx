@@ -14,11 +14,9 @@ interface Iteration {
 }
 
 export default function Home() {
-  const [jsonata, setJsonata] = useState<string>(`(
- $rubric_criteria := response.context.annotations.endpoint_GoldfishStrategy_2.annotations.rubric_items.response.criterias;
-)`);
-  const [output, setOutput] = useState<string>(`[{"criteria":"dfasdfasdfeee","category":"Objective","attributes":{"Category2":"Explicit","Label":"Aesthetics"}},{"criteria":"asdfasfeasfe","category":"Objective","attributes":{"Category2":"Implicit","Label":"Functionality"}}]`);
-  const [shouldFireDescription, setShouldFireDescription] = useState<string>("The linter should fire if any criteria are under 30 characters");
+  const [jsonata, setJsonata] = useState<string>("");
+  const [output, setOutput] = useState<string>("");
+  const [shouldFireDescription, setShouldFireDescription] = useState<string>("");
   const [results, setResults] = useState<{
     trueExamples: any[];
     falseExamples: any[];
@@ -180,7 +178,9 @@ export default function Home() {
                   onChange={(e) => setJsonata(e.target.value)}
                   className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-xl font-mono bg-white dark:bg-[#2A2A2A] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#FF8A3C] focus:border-transparent transition-all outline-none"
                   rows={4}
-                  placeholder="Enter your JSONata expression"
+                  placeholder={`Example: (
+ $rubric_criteria := response.context.annotations.endpoint_GoldfishStrategy_2.annotations.rubric_items.response.criterias;
+)`}
                 />
               </div>
 
@@ -191,7 +191,7 @@ export default function Home() {
                   onChange={(e) => setOutput(e.target.value)}
                   className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-xl font-mono bg-white dark:bg-[#2A2A2A] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#FF8A3C] focus:border-transparent transition-all outline-none"
                   rows={4}
-                  placeholder="Enter the example output JSON"
+                  placeholder={`Example: [{"criteria":"dfasdfasdfeee","category":"Objective","attributes":{"Category2":"Explicit","Label":"Aesthetics"}},{"criteria":"asdfasfeasfe","category":"Objective","attributes":{"Category2":"Implicit","Label":"Functionality"}}]`}
                 />
               </div>
 
@@ -202,7 +202,7 @@ export default function Home() {
                   onChange={(e) => setShouldFireDescription(e.target.value)}
                   className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#2A2A2A] text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#FF8A3C] focus:border-transparent transition-all outline-none"
                   rows={2}
-                  placeholder="Describe when the linter should fire"
+                  placeholder="Example: Any of the criteria are under 30 characters"
                 />
               </div>
 
