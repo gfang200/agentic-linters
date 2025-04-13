@@ -273,6 +273,7 @@ Requirements:
 3. Use dot notation (.) for property access
 4. Use square brackets [] only for array indexing/predicates
 5. Use backticks (\`) for special property names
+6. Preserve any use of the power operator (**) from the input expression in the same locations in the output expression
 
 Current expression: ${currentJsonata}
 
