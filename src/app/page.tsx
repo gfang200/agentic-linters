@@ -2,6 +2,17 @@
 
 import { useState } from "react";
 
+interface Iteration {
+  jsonata: string;
+  results: Array<{
+    example: any;
+    passed: boolean;
+    error?: string;
+    output?: any;
+  }>;
+  documentation: string[];
+}
+
 export default function Home() {
   const [jsonata, setJsonata] = useState<string>(`(
  $rubric_criteria := response.context.annotations.endpoint_GoldfishStrategy_2.annotations.rubric_items.response.criterias;
@@ -28,6 +39,7 @@ export default function Home() {
         error?: string;
         output?: any;
       }>;
+      documentation: string[];
     }>;
   } | null>(null);
   const [showErrorsMap, setShowErrorsMap] = useState<{[key: string]: boolean}>({});
@@ -382,6 +394,24 @@ export default function Home() {
                               {iteration.jsonata.trim()}
                             </pre>
                           </div>
+
+                          {iteration.documentation.length > 0 && (
+                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                              <div className="flex justify-between items-center mb-2">
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Documentation Used</h4>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {iteration.documentation.map((doc, docIndex) => (
+                                  <span
+                                    key={docIndex}
+                                    className="px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 rounded-md text-xs font-medium"
+                                  >
+                                    {doc}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           
                           {iteration.results.map((result, resultIndex) => (
                             <div

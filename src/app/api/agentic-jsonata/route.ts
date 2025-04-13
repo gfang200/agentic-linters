@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import jsonata from "jsonata";
+import fs from 'fs';
+import path from 'path';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -16,6 +18,7 @@ interface TestResult {
 interface Iteration {
   jsonata: string;
   results: TestResult[];
+  documentation: string[];
 }
 
 interface RequestBody {
@@ -102,17 +105,80 @@ async function testJsonata(jsonataStr: string, examples: any[], shouldPass: bool
   return results;
 }
 
+async function loadJsonataDocumentation(docName: string): Promise<string> {
+  try {
+    const docPath = path.join(process.cwd(), 'public', 'jsonata_documentation', `${docName}.md`);
+    return fs.promises.readFile(docPath, 'utf-8');
+  } catch (error) {
+    console.error(`Failed to load documentation for ${docName}:`, error);
+    return '';
+  }
+}
+
 async function generateNextJsonata(
   currentJsonata: string,
   trueExamples: any[],
   falseExamples: any[],
   description: string,
   previousResults: TestResult[]
-): Promise<string> {
+): Promise<{ jsonata: string; documentation: string[] }> {
   console.log('\n=== Starting generateNextJsonata ===');
   console.log('Current JSONata:', currentJsonata);
   console.log('Description:', description);
   console.log('Previous results:', JSON.stringify(previousResults, null, 2));
+
+  // First, ask the model if it needs any specific documentation
+  const docRequestPrompt = `Based on the following task and current JSONata expression, which documentation files would be most helpful? 
+Task: ${description}
+Current JSONata: ${currentJsonata}
+
+Available documentation files:
+- overview.md
+- simple.md
+- expressions.md
+- path-operators.md
+- comparison-operators.md
+- boolean-operators.md
+- numeric-operators.md
+- other-operators.md
+- string-functions.md
+- numeric-functions.md
+- boolean-functions.md
+- array-functions.md
+- object-functions.md
+- date-time-functions.md
+- aggregation-functions.md
+- higher-order-functions.md
+- predicate.md
+- sorting-grouping.md
+- construction.md
+- composition.md
+- programming.md
+- processing.md
+- regex.md
+- date-time.md
+- embedding-extending.md
+
+Return a JSON array of the most relevant documentation file names (without .md extension) that would help solve this task.`;
+
+  const docRequest = await openai.chat.completions.create({
+    messages: [{ role: "user", content: docRequestPrompt }],
+    model: "o3-mini",
+  });
+
+  let relevantDocs = '';
+  let documentation: string[] = [];
+  try {
+    documentation = JSON.parse(docRequest.choices[0].message.content || '[]');
+    for (const docName of documentation) {
+      const docContent = await loadJsonataDocumentation(docName);
+      if (docContent) {
+        relevantDocs += `\n\n=== ${docName} Documentation ===\n${docContent}`;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading documentation:', error);
+  }
 
   const prompt = `You are a JSONata expert. Your task is to write a JSONata expression that satisfies this requirement:
 ${description}
@@ -133,6 +199,8 @@ ${currentJsonata}
 Previous test results showing what failed:
 ${JSON.stringify(previousResults, null, 2)}
 
+${relevantDocs}
+
 Write a new JSONata expression that will correctly handle these cases. The expression should:
 1. Navigate to the correct data path
 2. Use appropriate JSONata functions to implement the logic
@@ -149,7 +217,7 @@ Return ONLY the JSONata expression, nothing else. Do not include any explanation
   const newJsonata = completion.choices[0].message.content?.trim() || "";
   console.log('Received new JSONata:', newJsonata);
   
-  return newJsonata;
+  return { jsonata: newJsonata, documentation };
 }
 
 export async function POST(request: Request) {
@@ -165,13 +233,14 @@ export async function POST(request: Request) {
     (async () => {
       try {
         // Generate initial JSONata expression using GPT
-        let currentJsonata = await generateNextJsonata(
+        const { jsonata: initialJsonata, documentation: initialDocs } = await generateNextJsonata(
           "",
           trueExamples,
           falseExamples,
           description,
           []
         );
+        let currentJsonata = initialJsonata;
         let allTestsPassed = false;
 
         while (!allTestsPassed) {
@@ -182,6 +251,7 @@ export async function POST(request: Request) {
           const iteration: Iteration = {
             jsonata: currentJsonata,
             results: allResults,
+            documentation: initialDocs,
           };
           
           // Send the iteration to the client
@@ -190,13 +260,14 @@ export async function POST(request: Request) {
           allTestsPassed = allResults.every(result => result.passed);
           if (allTestsPassed) break;
           
-          currentJsonata = await generateNextJsonata(
+          const { jsonata: nextJsonata, documentation: nextDocs } = await generateNextJsonata(
             currentJsonata,
             trueExamples,
             falseExamples,
             description,
             allResults
           );
+          currentJsonata = nextJsonata;
         }
 
         // Signal completion
@@ -217,7 +288,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error in agentic JSONata:", error);
     return NextResponse.json(
-      { error: "Failed to process request" },
+      { error: error instanceof Error ? error.message : JSON.stringify(error) },
       { status: 500 }
     );
   }
