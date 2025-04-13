@@ -358,7 +358,6 @@ export default function Home() {
                           {stats.isSuccessful && (
                             <button
                               onClick={() => {
-                                setJsonata(iteration.jsonata);
                                 // Create a temporary textarea to copy to clipboard
                                 const textarea = document.createElement('textarea');
                                 textarea.value = iteration.jsonata;
