@@ -169,12 +169,16 @@ Return a JSON array of the most relevant documentation file names (without .md e
   const docRequest = await openai.chat.completions.create({
     messages: [{ role: "user", content: docRequestPrompt }],
     model: "o3-mini",
+    response_format: { type: "json_object" }
   });
 
   let relevantDocs = '';
   let documentation: string[] = [];
   try {
-    documentation = JSON.parse(docRequest.choices[0].message.content || '[]');
+    const response = docRequest.choices[0].message.content || '{"docs":[]}';
+    const parsedResponse = JSON.parse(response);
+    documentation = Array.isArray(parsedResponse.docs) ? parsedResponse.docs : [];
+    
     for (const docName of documentation) {
       const docContent = await loadJsonataDocumentation(docName);
       if (docContent) {
@@ -183,6 +187,7 @@ Return a JSON array of the most relevant documentation file names (without .md e
     }
   } catch (error) {
     console.error('Error loading documentation:', error);
+    // Continue with empty documentation if there's an error
   }
 
   const prompt = `You are a JSONata expert. Your task is to write a JSONata expression that satisfies this requirement:
