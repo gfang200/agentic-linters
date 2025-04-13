@@ -169,15 +169,13 @@ Return a JSON array of the most relevant documentation file names (without .md e
   const docRequest = await openai.chat.completions.create({
     messages: [{ role: "user", content: docRequestPrompt }],
     model: "o3-mini",
-    response_format: { type: "json_object" }
   });
 
   let relevantDocs = '';
   let documentation: string[] = [];
   try {
-    const response = docRequest.choices[0].message.content || '{"docs":[]}';
-    const parsedResponse = JSON.parse(response);
-    documentation = Array.isArray(parsedResponse.docs) ? parsedResponse.docs : [];
+    documentation = JSON.parse(docRequest.choices[0].message.content || '[]');
+
     
     for (const docName of documentation) {
       const docContent = await loadJsonataDocumentation(docName);
@@ -190,8 +188,6 @@ Return a JSON array of the most relevant documentation file names (without .md e
     // Continue with empty documentation if there's an error
   }
 
-  console.log(documentation)
-  
   const prompt = `You are a JSONata expert. Your task is to write a JSONata expression that satisfies this requirement:
 ${description}
 
