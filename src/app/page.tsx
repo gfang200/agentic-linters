@@ -48,6 +48,14 @@ export default function Home() {
   const handleSubmit = async () => {
     setLoading(true);
     setError("");
+    // Clear existing tests and iterations
+    setResults(null);
+    setAgenticIterations(null);
+    setEditableTrueExamples([]);
+    setEditableFalseExamples([]);
+    setIsEditingTrueExamples([]);
+    setIsEditingFalseExamples([]);
+    setExpandedIterations({});
     try {
       const res = await fetch("/api/openai", {
         method: "POST",
@@ -164,7 +172,7 @@ export default function Home() {
       <main className="max-w-7xl mx-auto">
         <div className="flex items-center gap-2 mb-8">
           <span className="text-[#FF8A3C] text-2xl">{ }</span>
-          <h1 className="text-2xl font-bold text-[#1A1A1A] dark:text-white">Agentic JSONata Generator</h1>
+          <h1 className="text-2xl font-bold text-[#1A1A1A] dark:text-white">Archie Linter</h1>
         </div>
         
         <div className={`flex gap-8 ${agenticIterations ? 'grid grid-cols-2' : ''}`}>
@@ -220,7 +228,7 @@ export default function Home() {
                   disabled={isAgenticLoading || !results}
                   className="flex-1 px-6 py-3 bg-[#1A1A1A] dark:bg-white text-white dark:text-[#1A1A1A] rounded-xl hover:bg-[#2A2A2A] dark:hover:bg-gray-100 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-all font-semibold cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:cursor-not-allowed"
                 >
-                  {isAgenticLoading ? "Solving..." : "Run Agentic JSONata"}
+                  {isAgenticLoading ? "Solving..." : "Run Archie Linter"}
                 </button>
 
                 {isAgenticLoading && (
@@ -433,13 +441,19 @@ export default function Home() {
                               {result.passed ? (
                                 <div className="mt-2 space-y-2">
                                   <div>
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Expected:</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Input:</span>
                                     <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
                                       {JSON.stringify(result.example, null, 2)}
                                     </pre>
                                   </div>
                                   <div>
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Output:</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Expected Output:</span>
+                                    <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
+                                      {result.passed ? "true" : "false"}
+                                    </pre>
+                                  </div>
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Actual Output:</span>
                                     <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
                                       {JSON.stringify(result.output, null, 2)}
                                     </pre>
@@ -448,13 +462,19 @@ export default function Home() {
                               ) : (
                                 <div className="mt-2 space-y-2">
                                   <div>
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Expected:</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Input:</span>
                                     <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
                                       {JSON.stringify(result.example, null, 2)}
                                     </pre>
                                   </div>
                                   <div>
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Received:</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Expected Output:</span>
+                                    <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
+                                      {result.passed ? "true" : "false"}
+                                    </pre>
+                                  </div>
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Actual Output:</span>
                                     <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
                                       {JSON.stringify(result.output, null, 2)}
                                     </pre>

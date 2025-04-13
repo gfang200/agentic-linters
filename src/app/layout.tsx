@@ -13,7 +13,7 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agentic JSONata Generator",
+  title: "Archie Linter",
   description: "A tool for generating and testing JSONata expressions",
 };
 
