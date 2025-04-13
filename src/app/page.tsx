@@ -432,10 +432,19 @@ export default function Home() {
                                 </span>
                               </div>
                               {result.passed ? (
-                                <div className="mt-2">
-                                  <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
-                                    {JSON.stringify(result.output, null, 2)}
-                                  </pre>
+                                <div className="mt-2 space-y-2">
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Expected:</span>
+                                    <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
+                                      {JSON.stringify(result.example, null, 2)}
+                                    </pre>
+                                  </div>
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Output:</span>
+                                    <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
+                                      {JSON.stringify(result.output, null, 2)}
+                                    </pre>
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="mt-2 space-y-2">
@@ -455,9 +464,9 @@ export default function Home() {
                                     <div>
                                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Error:</span>
                                       <pre className="text-sm whitespace-pre-wrap break-words overflow-x-auto text-red-600 dark:text-red-400 font-mono max-w-full">
-                                        {typeof result.error === 'object' 
-                                          ? JSON.stringify(result.error, null, 2)
-                                          : result.error}
+                                        {typeof result.error === 'string' 
+                                          ? result.error
+                                          : JSON.stringify(result.error, null, 2)}
                                       </pre>
                                     </div>
                                   )}

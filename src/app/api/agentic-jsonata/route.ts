@@ -62,7 +62,10 @@ async function testJsonata(jsonataStr: string, examples: any[], shouldPass: bool
         console.log('Evaluation result:', output);
       } catch (error) {
         console.error('Failed to evaluate expression:', error);
-        const evalError = error instanceof Error ? error.message : String(error);
+        const evalError = error instanceof Error ? error.message : 
+          typeof error === 'object' && error !== null ? 
+            JSON.stringify(error, Object.getOwnPropertyNames(error)) : 
+            String(error);
         throw new Error(`Evaluation failed: ${evalError}`);
       }
       
@@ -93,7 +96,9 @@ async function testJsonata(jsonataStr: string, examples: any[], shouldPass: bool
         example,
         passed: false,
         error: error instanceof Error ? error.message : 
-          typeof error === 'object' && error !== null ? JSON.stringify(error) : String(error),
+          typeof error === 'object' && error !== null ? 
+            JSON.stringify(error, Object.getOwnPropertyNames(error)) : 
+            String(error),
       });
     }
   }
