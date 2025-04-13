@@ -19,6 +19,8 @@ interface Progress {
   passedExamples: any[];
   failedExamples: any[];
   successfulPatterns: string[];
+  reasoning?: string;
+  documentation: string[];
 }
 
 interface Iteration {
@@ -141,111 +143,76 @@ async function generateNextJsonata(
   console.log('Previous results:', JSON.stringify(previousResults, null, 2));
   console.log('Progress:', JSON.stringify(progress, null, 2));
 
-  // First, ask the model if it needs any specific documentation
-  const docRequestPrompt = `Based on the following task and current JSONata expression, which documentation files would be most helpful? 
-Task: ${description}
-Current JSONata: ${currentJsonata}
-
-Available documentation files:
-- overview.md
-- simple.md
-- expressions.md
-- path-operators.md
-- comparison-operators.md
-- boolean-operators.md
-- numeric-operators.md
-- other-operators.md
-- string-functions.md
-- numeric-functions.md
-- boolean-functions.md
-- array-functions.md
-- object-functions.md
-- date-time-functions.md
-- aggregation-functions.md
-- higher-order-functions.md
-- predicate.md
-- sorting-grouping.md
-- construction.md
-- composition.md
-- programming.md
-- processing.md
-- regex.md
-- date-time.md
-- embedding-extending.md
-
-Return a JSON array of the most relevant documentation file names (without .md extension) that would help solve this task.`;
-
-  const docRequest = await openai.chat.completions.create({
-    messages: [{ role: "user", content: docRequestPrompt }],
-    model: "o3-mini",
-  });
-
-  let relevantDocs = '';
+  // Load documentation only once per task
   let documentation: string[] = [];
-  try {
-    documentation = JSON.parse(docRequest.choices[0].message.content || '[]');
+  let relevantDocs = '';
+  if (!progress?.documentation) {
+    const docRequestPrompt = `Which documentation files would help with: ${description}?`;
+    const docRequest = await openai.chat.completions.create({
+      messages: [{ role: "user", content: docRequestPrompt }],
+      model: "o3-mini",
+    });
 
-    for (const docName of documentation) {
-      const docContent = await loadJsonataDocumentation(docName);
-      if (docContent) {
-        relevantDocs += `\n\n=== ${docName} Documentation ===\n${docContent}`;
+    try {
+      documentation = JSON.parse(docRequest.choices[0].message.content || '[]');
+      for (const docName of documentation) {
+        const docContent = await loadJsonataDocumentation(docName);
+        if (docContent) {
+          relevantDocs += `\n\n=== ${docName} Documentation ===\n${docContent}`;
+        }
       }
+    } catch (error) {
+      console.error('Error loading documentation:', error);
     }
-  } catch (error) {
-    console.error('Error loading documentation:', error);
-    // Continue with empty documentation if there's an error
+  } else {
+    documentation = progress.documentation;
   }
 
-  // Build progress context
-  const progressContext = progress ? `
-Previous Progress:
-- Successfully handled examples: ${JSON.stringify(progress.passedExamples, null, 2)}
-- Previously failed examples: ${JSON.stringify(progress.failedExamples, null, 2)}
-- Successful patterns to build upon: ${progress.successfulPatterns.join(', ')}
-` : '';
+  // Build the messages array for the conversation
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    {
+      role: "system",
+      content: `You are a JSONata expert. Write a JSONata expression that:
+1. Satisfies: ${description}
+2. Returns true/false for the given examples
+3. Uses dot notation (.) for property access
+4. Uses square brackets [] only for array indexing/predicates
+5. Uses backticks (\`) for special property names
 
-  const prompt = `You are a JSONata expert. Your task is to write a JSONata expression that satisfies this requirement:
-${description}
+Input examples:
+True: ${JSON.stringify(trueExamples, null, 2)}
+False: ${JSON.stringify(falseExamples, null, 2)}`
+    }
+  ];
 
-The input will be a JSON object similar to the provided examples.
+  messages.push({
+    role: "assistant",
+    content: `Starting expression: ${currentJsonata}`
+  });
 
-Here are some example inputs and their expected outputs:
-
-True Examples (should return true):
-${JSON.stringify(trueExamples, null, 2)}
-
-False Examples (should return false):
-${JSON.stringify(falseExamples, null, 2)}
-
-Current JSONata expression that isn't working:
-${currentJsonata}
-
-Previous test results showing what failed:
-${JSON.stringify(previousResults, null, 2)}
-
-${progressContext}
+  messages.push({
+    role: "user",
+    content: `Previous results: ${JSON.stringify(previousResults, null, 2)}
+${progress ? `
+Progress:
+- Passed: ${JSON.stringify(progress.passedExamples, null, 2)}
+- Failed: ${JSON.stringify(progress.failedExamples, null, 2)}
+- Patterns: ${progress.successfulPatterns.join(', ')}
+${progress.reasoning ? `\nAnalysis: ${progress.reasoning}` : ''}
+` : ''}
 
 ${relevantDocs}
 
-IMPORTANT JSONata Syntax Rules:
-1. Use dot notation (.) for property access, NOT square brackets
-   - GOOD: response.context.response.annotations.pytest-unit-test-sphere-engine.response.stdoutOutput
-   - BAD: response.context.response.annotations["pytest-unit-test-sphere-engine"].response.stdoutOutput
-2. Only use square brackets [] for array indexing or predicates
-3. For property names with special characters, use backticks (\`) instead of quotes
+Write a new JSONata expression that:
+1. Builds on the starting expression
+2. Fixes failed examples
+3. Maintains working patterns
+4. Returns ONLY the expression`
+  });
 
-Write a new JSONata expression that will correctly handle these cases. The expression should:
-1. Navigate to the correct data path using dot notation
-2. Use appropriate JSONata functions to implement the logic
-3. Return true/false based on the description above
-4. Build upon any successful patterns from previous iterations
-5. Focus on fixing the specific examples that failed in previous attempts
-
-Return ONLY the JSONata expression, nothing else. Do not include any explanations or comments.`;
-
-  console.log('Sending prompt to model...');
+  console.log('Sending messages to model...');
   const completion = await openai.chat.completions.create({
-    messages: [{ role: "user", content: prompt }],
+    messages,
     model: "o3-mini",
   });
 
@@ -255,10 +222,48 @@ Return ONLY the JSONata expression, nothing else. Do not include any explanation
   return { jsonata: newJsonata, documentation };
 }
 
+async function generateReasoning(
+  currentJsonata: string,
+  allResults: TestResult[],
+  progress: Progress,
+  description: string
+): Promise<string> {
+  console.log('\n=== Starting generateReasoning ===');
+  
+  const prompt = `Analyze this JSONata expression and its results:
+
+Expression: ${currentJsonata}
+Task: ${description}
+
+Results:
+${JSON.stringify(allResults, null, 2)}
+
+Progress:
+- Passed: ${JSON.stringify(progress.passedExamples, null, 2)}
+- Failed: ${JSON.stringify(progress.failedExamples, null, 2)}
+- Patterns: ${progress.successfulPatterns.join(', ')}
+
+Provide analysis of:
+1. Working parts
+2. Failure reasons
+3. Improvement suggestions
+4. Next steps`;
+
+  const completion = await openai.chat.completions.create({
+    messages: [{ role: "user", content: prompt }],
+    model: "o3-mini",
+  });
+
+  const reasoning = completion.choices[0].message.content?.trim() || "";
+  console.log('Generated reasoning:', reasoning);
+  
+  return reasoning;
+}
+
 export async function POST(request: Request) {
   try {
     const body: RequestBody = await request.json();
-    const { trueExamples, falseExamples, description } = body;
+    const { jsonata: initialJsonata, trueExamples, falseExamples, description } = body;
 
     const encoder = new TextEncoder();
     const stream = new TransformStream();
@@ -267,26 +272,30 @@ export async function POST(request: Request) {
     // Start the agentic process in the background
     (async () => {
       try {
-        // Generate initial JSONata expression using GPT
-        const { jsonata: initialJsonata, documentation: initialDocs } = await generateNextJsonata(
-          "",
-          trueExamples,
-          falseExamples,
-          description,
-          []
-        );
         let currentJsonata = initialJsonata;
         let allTestsPassed = false;
         let progress: Progress = {
           passedExamples: [],
           failedExamples: [],
-          successfulPatterns: []
+          successfulPatterns: [],
+          documentation: []
         };
+
+        // First iteration with the provided JSONata
+        const { jsonata: firstJsonata, documentation } = await generateNextJsonata(
+          initialJsonata,
+          trueExamples,
+          falseExamples,
+          description,
+          [],
+          progress
+        );
+        currentJsonata = firstJsonata;
+        progress.documentation = documentation;
 
         while (!allTestsPassed) {
           const trueResults = await testJsonata(currentJsonata, trueExamples, true);
           const falseResults = await testJsonata(currentJsonata, falseExamples, false);
-          
           const allResults = [...trueResults, ...falseResults];
           
           // Update progress tracking
@@ -302,7 +311,6 @@ export async function POST(request: Request) {
             const successfulPatterns = new Set<string>();
             for (const result of allResults) {
               if (result.passed) {
-                // Extract patterns from the JSONata expression that worked
                 const pattern = extractPatternFromJsonata(currentJsonata, result.example);
                 if (pattern) {
                   successfulPatterns.add(pattern);
@@ -311,11 +319,21 @@ export async function POST(request: Request) {
             }
             progress.successfulPatterns = Array.from(successfulPatterns);
           }
+
+          // Only generate reasoning if there are failed tests
+          if (progress.failedExamples.length > 0) {
+            progress.reasoning = await generateReasoning(
+              currentJsonata,
+              allResults,
+              progress,
+              description
+            );
+          }
           
           const iteration: Iteration = {
             jsonata: currentJsonata,
             results: allResults,
-            documentation: initialDocs,
+            documentation: progress.documentation,
             progress
           };
           
@@ -325,7 +343,7 @@ export async function POST(request: Request) {
           allTestsPassed = allResults.every(result => result.passed);
           if (allTestsPassed) break;
           
-          const { jsonata: nextJsonata, documentation: nextDocs } = await generateNextJsonata(
+          const { jsonata: nextJsonata } = await generateNextJsonata(
             currentJsonata,
             trueExamples,
             falseExamples,

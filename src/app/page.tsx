@@ -11,6 +11,9 @@ interface Iteration {
     output?: any;
   }>;
   documentation: string[];
+  progress?: {
+    reasoning: string;
+  };
 }
 
 export default function Home() {
@@ -20,6 +23,8 @@ export default function Home() {
   const [results, setResults] = useState<{
     trueExamples: any[];
     falseExamples: any[];
+    trueExampleOutputs?: any[];
+    falseExampleOutputs?: any[];
   } | null>(null);
   const [editableTrueExamples, setEditableTrueExamples] = useState<string[]>([]);
   const [editableFalseExamples, setEditableFalseExamples] = useState<string[]>([]);
@@ -38,6 +43,9 @@ export default function Home() {
         output?: any;
       }>;
       documentation: string[];
+      progress?: {
+        reasoning: string;
+      };
     }>;
   } | null>(null);
   const [showErrorsMap, setShowErrorsMap] = useState<{[key: string]: boolean}>({});
@@ -288,9 +296,22 @@ export default function Home() {
                                 className="w-full p-4 bg-transparent border-none focus:ring-0 font-mono text-gray-900 dark:text-gray-100 resize-y min-h-[100px]"
                               />
                             ) : (
-                              <pre className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-mono">
-                                {example}
-                              </pre>
+                              <div className="space-y-4">
+                                <div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Input:</span>
+                                  <pre className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-mono">
+                                    {example}
+                                  </pre>
+                                </div>
+                                {results?.trueExampleOutputs?.[index] !== undefined && (
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Output:</span>
+                                    <pre className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-mono">
+                                      {JSON.stringify(results.trueExampleOutputs[index], null, 2)}
+                                    </pre>
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
                         ))}
@@ -326,9 +347,22 @@ export default function Home() {
                                 className="w-full p-4 bg-transparent border-none focus:ring-0 font-mono text-gray-900 dark:text-gray-100 resize-y min-h-[100px]"
                               />
                             ) : (
-                              <pre className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-mono">
-                                {example}
-                              </pre>
+                              <div className="space-y-4">
+                                <div>
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Input:</span>
+                                  <pre className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-mono">
+                                    {example}
+                                  </pre>
+                                </div>
+                                {results?.falseExampleOutputs?.[index] !== undefined && (
+                                  <div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Output:</span>
+                                    <pre className="whitespace-pre-wrap text-gray-900 dark:text-gray-100 font-mono">
+                                      {JSON.stringify(results.falseExampleOutputs[index], null, 2)}
+                                    </pre>
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
                         ))}
@@ -363,25 +397,23 @@ export default function Home() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {stats.isSuccessful && (
-                            <button
-                              onClick={() => {
-                                // Create a temporary textarea to copy to clipboard
-                                const textarea = document.createElement('textarea');
-                                textarea.value = iteration.jsonata;
-                                document.body.appendChild(textarea);
-                                textarea.select();
-                                document.execCommand('copy');
-                                document.body.removeChild(textarea);
-                              }}
-                              className="px-3 py-1 bg-[#F9F7F6] dark:bg-[#3A3A3A] text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-[#4A4A4A] transition-all text-sm font-medium flex items-center gap-1 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
-                              Copy JSONata
-                            </button>
-                          )}
+                          <button
+                            onClick={() => {
+                              // Create a temporary textarea to copy to clipboard
+                              const textarea = document.createElement('textarea');
+                              textarea.value = iteration.jsonata;
+                              document.body.appendChild(textarea);
+                              textarea.select();
+                              document.execCommand('copy');
+                              document.body.removeChild(textarea);
+                            }}
+                            className="px-3 py-1 bg-[#F9F7F6] dark:bg-[#3A3A3A] text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-[#4A4A4A] transition-all text-sm font-medium flex items-center gap-1 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy JSONata
+                          </button>
                           <button
                             onClick={() => toggleIteration(index)}
                             className="px-3 py-1 bg-[#F9F7F6] dark:bg-[#3A3A3A] text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-[#4A4A4A] transition-all text-sm font-medium cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
@@ -390,7 +422,7 @@ export default function Home() {
                           </button>
                         </div>
                       </div>
-                      
+
                       {expandedIterations[index] && (
                         <div className="space-y-4">
                           <div className="p-4 bg-gray-50 dark:bg-gray-900/20 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -430,13 +462,18 @@ export default function Home() {
                               }`}
                             >
                               <div className="flex justify-between items-center">
-                                <span className={`font-medium ${
-                                  result.passed 
-                                    ? "text-green-700 dark:text-green-400" 
-                                    : "text-red-700 dark:text-red-400"
-                                }`}>
-                                  {result.passed ? "✓ Passed" : "✗ Failed"}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className={`font-medium ${
+                                    result.passed 
+                                      ? "text-green-700 dark:text-green-400" 
+                                      : "text-red-700 dark:text-red-400"
+                                  }`}>
+                                    {result.passed ? "✓ Passed" : "✗ Failed"}
+                                  </span>
+                                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    {results && resultIndex < results.trueExamples.length ? "True Example" : "False Example"}
+                                  </span>
+                                </div>
                               </div>
                               {result.passed ? (
                                 <div className="mt-2 space-y-2">
@@ -449,7 +486,7 @@ export default function Home() {
                                   <div>
                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Expected Output:</span>
                                     <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
-                                      {result.passed ? "true" : "false"}
+                                      {results && resultIndex < results.trueExamples.length ? "true" : "false"}
                                     </pre>
                                   </div>
                                   <div>
@@ -470,7 +507,7 @@ export default function Home() {
                                   <div>
                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Expected Output:</span>
                                     <pre className="text-sm whitespace-pre-wrap text-gray-900 dark:text-gray-100">
-                                      {result.passed ? "true" : "false"}
+                                      {results && resultIndex < results.trueExamples.length ? "true" : "false"}
                                     </pre>
                                   </div>
                                   <div>
@@ -493,6 +530,15 @@ export default function Home() {
                               )}
                             </div>
                           ))}
+
+                          {iteration.progress?.reasoning && (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reasoning & Plan</h4>
+                              <pre className="text-sm whitespace-pre-wrap break-words overflow-x-auto text-gray-900 dark:text-gray-100 font-mono max-w-full">
+                                {iteration.progress.reasoning}
+                              </pre>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
