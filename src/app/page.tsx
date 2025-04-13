@@ -260,7 +260,7 @@ export default function Home() {
                 {!isCollapsed && (
                   <div className="bg-white dark:bg-[#2A2A2A] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 space-y-8">
                     <div>
-                      <h2 className="text-xl font-medium mb-4 text-gray-900 dark:text-white">True Tests</h2>
+                      <h2 className="text-xl font-medium mb-4 text-gray-900 dark:text-white">The Linter Should Fire When</h2>
                       <div className="space-y-4">
                         {editableTrueExamples.map((example, index) => (
                           <div key={index} className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
@@ -298,7 +298,7 @@ export default function Home() {
                     </div>
 
                     <div>
-                      <h2 className="text-xl font-medium mb-4 text-gray-900 dark:text-white">False Tests</h2>
+                      <h2 className="text-xl font-medium mb-4 text-gray-900 dark:text-white">The Linter Should Not Fire When</h2>
                       <div className="space-y-4">
                         {editableFalseExamples.map((example, index) => (
                           <div key={index} className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">

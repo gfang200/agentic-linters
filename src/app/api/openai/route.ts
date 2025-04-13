@@ -20,13 +20,19 @@ ${JSON.stringify(output, null, 2)}
 And the following description of the intended output:
 ${description}
 
-Please generate 3 examples where the final JSONata would return true, and 3 examples where it would return false. Format your response as a JSON object with two arrays: "trueExamples" and "falseExamples". Each example should be a complete JSON object that would be valid input for the JSONata expression.`;
+Please generate test examples that would make the JSONata expression return true or false. Format your response as a JSON object with two arrays: "trueExamples" and "falseExamples". For each array, generate exactly 3 examples that:
+
+1. Include realistic examples that is representative of the provided output data
+2. Include some edge cases that test the boundaries of the expression without being overly convoluted
+3. Ensure each example is a complete JSON object that would be valid input for the JSONata expression
+
+Focus on generating meaningful, real-world data that tests both common scenarios and edge cases.`;
 
     const completion = await openai.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "You are a JSONata expert. Your task is to generate examples that would make a given JSONata expression return true or false based on a description.",
+          content: "You are a JSONata expert and software testing specialist. Your task is to generate exactly 3 realistic test examples and edge cases for each case (true and false) that would make a given JSONata expression return true or false based on a description. Focus on generating meaningful, real-world data that tests both common scenarios and edge cases.",
         },
         {
           role: "user",
